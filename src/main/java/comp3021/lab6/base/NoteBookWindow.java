@@ -113,7 +113,8 @@ public class NoteBookWindow extends Application {
 				fileChooser.getExtensionFilters().add(exFilter);
 				File file = fileChooser.showOpenDialog(stage);
 				if(file!=null) {
-					
+					NoteBook nb = new NoteBook(file.getPath());
+					//System.out.println(nb.getFolders());
 				}
 				
 			}
