@@ -1,5 +1,6 @@
 package comp3021.lab6.base;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,7 +29,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
+import javafx.stage.FileChooser; 
 /**
  * 
  * NoteBook GUI with JAVAFX
@@ -67,14 +68,16 @@ public class NoteBookWindow extends Application {
 	 * current search string
 	 */
 	String currentSearch = "";
-
+	Stage stage;
 	public static void main(String[] args) {
 		launch(NoteBookWindow.class, args);
 	}
 
 	@Override
 	public void start(Stage stage) {
+		
 		loadNoteBook();
+		this.stage = stage;
 		// Use a border pane as the root for scene
 		BorderPane border = new BorderPane();
 		// add top, left and center
@@ -101,6 +104,21 @@ public class NoteBookWindow extends Application {
 
 		Button buttonLoad = new Button("Load from File");
 		buttonLoad.setPrefSize(100, 20);
+		buttonLoad.setOnAction(new EventHandler<ActionEvent>(){
+			@Override
+			public void handle(ActionEvent event) {
+				FileChooser fileChooser = new FileChooser();
+				fileChooser.setTitle("Please Choose An File Which Contain A Notebook Object");
+				FileChooser.ExtensionFilter exFilter = new FileChooser.ExtensionFilter("Serializaed Object File (*.ser)","*.ser");
+				fileChooser.getExtensionFilters().add(exFilter);
+				File file = fileChooser.showOpenDialog(stage);
+				if(file!=null) {
+					
+				}
+				
+			}
+			
+		});
 		//buttonLoad.setDisable(true);
 		Button buttonSave = new Button("Save to File");
 		buttonSave.setPrefSize(100, 20);
