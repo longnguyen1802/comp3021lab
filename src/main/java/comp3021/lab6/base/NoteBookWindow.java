@@ -4,11 +4,15 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+
 import comp3021.lab6.base.Folder;
 import comp3021.lab6.base.Note;
 import comp3021.lab6.base.NoteBook;
 import comp3021.lab6.base.TextNote;
 import javafx.application.Application;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.Property;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -17,13 +21,17 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -59,7 +67,7 @@ public class NoteBookWindow extends Application {
 	/**
 	 * This is our Notebook object
 	 */
-	NoteBook noteBook = null;
+	ObjectProperty<NoteBook> noteBook = null;
 	/**
 	 * current folder selected by the user
 	 */
@@ -113,8 +121,7 @@ public class NoteBookWindow extends Application {
 				fileChooser.getExtensionFilters().add(exFilter);
 				File file = fileChooser.showOpenDialog(stage);
 				if(file!=null) {
-					NoteBook nb = new NoteBook(file.getPath());
-					//System.out.println(nb.getFolders());
+					loadNoteBook(file);
 				}
 				
 			}
@@ -123,6 +130,25 @@ public class NoteBookWindow extends Application {
 		//buttonLoad.setDisable(true);
 		Button buttonSave = new Button("Save to File");
 		buttonSave.setPrefSize(100, 20);
+		buttonSave.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				FileChooser fileChooser = new FileChooser();
+				fileChooser.setTitle("Please Choose An File Which Contain A Notebook Object");
+				FileChooser.ExtensionFilter exFilter = new FileChooser.ExtensionFilter("Serializaed Object File (*.ser)","*.ser");
+				fileChooser.getExtensionFilters().add(exFilter);
+				File file = fileChooser.showSaveDialog(stage);
+				noteBook.get().save(file.getPath());
+				Alert alert = new Alert(AlertType.INFORMATION);
+				alert.setTitle("Successfully saved");
+				alert.setContentText("You file has been saved to file " + file.getName());
+				alert.showAndWait().ifPresent(rs -> {
+				    if (rs == ButtonType.OK) {
+				        System.out.println("Pressed OK.");
+				    }
+				});
+			}
+		});
 		//buttonSave.setDisable(true);
 
 		hbox.getChildren().addAll(buttonLoad, buttonSave);
@@ -142,9 +168,19 @@ public class NoteBookWindow extends Application {
 		vbox.setSpacing(8); // Gap between nodes
 
 		// TODO: This line is a fake folder list. We should display the folders in noteBook variable! Replace this with your implementation
-		for(Folder folder:noteBook.getFolders()) {
+		for(Folder folder:noteBook.get().getFolders()) {
 			foldersComboBox.getItems().add(folder.getName());
 		}
+		noteBook.addListener(new ChangeListener<NoteBook>() {
+			@Override
+			public void changed(ObservableValue ov, NoteBook t, NoteBook t1) {
+				foldersComboBox.getItems().clear();
+				for(Folder folder:t1.getFolders()) {
+					foldersComboBox.getItems().add(folder.getName());
+				}
+				foldersComboBox.setValue("-----");
+			}
+		});
 
 		foldersComboBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Object>() {
 			@Override
@@ -171,7 +207,7 @@ public class NoteBookWindow extends Application {
 				// This is the selected title
 				// TODO load the content of the selected note in
 				// textAreNote
-				for(Folder folder:noteBook.getFolders()) {
+				for(Folder folder:noteBook.get().getFolders()) {
 					if(folder.getName().equals(currentFolder)) {
 						for(Note note:folder.getNotes()) {
 							if(note.getTitle().equals(title)) {
@@ -186,10 +222,111 @@ public class NoteBookWindow extends Application {
 
 			}
 		});
-		vbox.getChildren().add(new Label("Choose folder: "));
+		
+		Button addFolder = new Button("Add a Folder");
+		addFolder.setPrefSize(100, 20);
+		addFolder.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				TextInputDialog dialog = new TextInputDialog("Add a Folder");
+			    dialog.setTitle("Input");
+			    dialog.setHeaderText("Add a new folder for your notebook:");
+			    dialog.setContentText("Please enter the name you want to create:");
+
+			    // Traditional way to get the response value.
+			    java.util.Optional<String> result = dialog.showAndWait();
+			    if (result.isPresent()){
+			        // TODO
+			    	if(result.get()=="") {
+			    		Alert alert = new Alert(AlertType.WARNING);
+						alert.setTitle("Warning");
+						alert.setContentText("Please input an valid folder name");
+						alert.showAndWait().ifPresent(rs -> {
+						    if (rs == ButtonType.OK) {
+						        //System.out.println("Pressed OK.");
+						    }
+						});
+			    	}
+			    	else {
+				    	if(noteBook.get().getNameFolders().contains(result.get())) {
+				    		Alert alert = new Alert(AlertType.WARNING);
+							alert.setTitle("Warning");
+							alert.setContentText("You already have an folder name with "+result.get());
+							alert.showAndWait().ifPresent(rs -> {
+							    if (rs == ButtonType.OK) {
+							        //System.out.println("Pressed OK.");
+							    }
+							});
+				    	}
+				    	else {
+				    		NoteBook nb = noteBook.get();
+				    		//System.out.println(nb.getFolders());
+				    		nb.addFolder(result.get());
+				    		//System.out.println(nb.getFolders());
+				    		noteBook.set(new NoteBook(nb));
+				    	}
+				    }
+			    }
+
+			}
+			
+		});
+		//TODO
+		Button addNote = new Button("Add a Note");
+		addNote.setPrefSize(100, 20);
+		addNote.setOnAction(new EventHandler<ActionEvent>(){
+			@Override
+			public void handle(ActionEvent event) {
+				boolean isEmpty = foldersComboBox.getSelectionModel().isEmpty();
+				if(isEmpty) {
+					Alert alert = new Alert(AlertType.WARNING);
+					alert.setTitle("Warning");
+					alert.setContentText("Please choose a folder first");
+					alert.showAndWait().ifPresent(rs -> {
+					    if (rs == ButtonType.OK) {
+					        //System.out.println("Pressed OK.");
+					    }
+					});
+				}
+				else {
+					String folderName = foldersComboBox.getValue();
+					TextInputDialog dialog = new TextInputDialog("Add a Note");
+				    dialog.setTitle("Input");
+				    dialog.setHeaderText("Add a new note to current folder");
+				    dialog.setContentText("Please enter the name you want to create:");
+
+				    // Traditional way to get the response value.
+				    java.util.Optional<String> result = dialog.showAndWait();
+				    
+				    NoteBook nb = noteBook.get();
+		    		nb.createTextNote(folderName, result.get(), "");
+		    		noteBook.set(new NoteBook(nb));
+				    
+				    Alert alert = new Alert(AlertType.INFORMATION);
+					alert.setTitle("Successful");
+					alert.setContentText("Insert note "+result.get()+" to folder "+ folderName+" successfully");
+					alert.showAndWait().ifPresent(rs -> {
+					    if (rs == ButtonType.OK) {
+					        //System.out.println("Pressed OK.");
+					    }
+					});
+				}
+			}
+		});
+		//TODO
+		
+		
+		HBox hbox = new HBox();
+		hbox.setPadding(new Insets(10)); // Set all sides to 10
+		hbox.setSpacing(8); // Gap between nodes
+		hbox.getChildren().add(new Label("Choose folder: "));
+		hbox.getChildren().add(addFolder);
+		
+		vbox.getChildren().add(hbox);
 		vbox.getChildren().add(foldersComboBox);
 		vbox.getChildren().add(new Label("Choose note title"));
 		vbox.getChildren().add(titleslistView);
+		vbox.getChildren().add(addNote);
 
 		return vbox;
 	}
@@ -199,7 +336,7 @@ public class NoteBookWindow extends Application {
 
 		// TODO populate the list object with all the TextNote titles of the
 		// currentFolder
-		for(Folder folder:noteBook.getFolders()) {
+		for(Folder folder:noteBook.get().getFolders()) {
 			if(folder.getName().equals(currentFolder)) {
 				for(Note note:folder.getNotes()) {
 					list.add(note.getTitle());
@@ -231,8 +368,12 @@ public class NoteBookWindow extends Application {
 
 		return grid;
 	}
-
+	private void loadNoteBook(File file) {
+		NoteBook nb = new NoteBook(file.getPath());
+		noteBook.set(nb);
+	}
 	private void loadNoteBook() {
+		noteBook = new SimpleObjectProperty<NoteBook>();
 		NoteBook nb = new NoteBook();
 		nb.createTextNote("COMP3021", "COMP3021 syllabus", "Be able to implement object-oriented concepts in Java.");
 		nb.createTextNote("COMP3021", "course information",
@@ -249,7 +390,7 @@ public class NoteBookWindow extends Application {
 				"What I should Bring? When I should go? Ask Romina if she wants to come");
 		nb.createTextNote("Holiday", "Los Angeles", "Peter said he wants to go next Agugust");
 		nb.createTextNote("Holiday", "Christmas", "Possible destinations : Home, New York or Rome");
-		noteBook = nb;
+		noteBook.set(nb);
 
 	}
 

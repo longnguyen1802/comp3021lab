@@ -6,8 +6,12 @@ import java.io.FileInputStream;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EventListener;
 import java.util.List;
-public class NoteBook implements java.io.Serializable{
+
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+public class NoteBook implements java.io.Serializable,EventListener{
 	/**
 	 * 
 	 */
@@ -15,6 +19,19 @@ public class NoteBook implements java.io.Serializable{
 	private ArrayList<Folder> folders;
 	public NoteBook(){
 		folders = new ArrayList<Folder>();
+	}
+	public NoteBook(NoteBook other) {
+		folders = new ArrayList<Folder>();
+		for(Folder folder:other.folders) {
+			folders.add(folder);
+		}
+	}
+	public ObservableList<String> getList(){
+		ArrayList<String> temp = new ArrayList<String>();
+		for(Folder folder:folders) {
+			temp.add(folder.getName());
+		}
+		return FXCollections.observableArrayList(temp);
 	}
 	public NoteBook(String file) {
 		FileInputStream fis = null;
@@ -59,6 +76,17 @@ public class NoteBook implements java.io.Serializable{
 			folders.add(f);
 		}
 		return true;
+	}
+	public ArrayList<String> getNameFolders(){
+		ArrayList<String> names = new ArrayList<String>();
+		for(Folder folder:folders) {
+			names.add(folder.getName());
+		}
+		return names;
+	}
+	public void addFolder(String folderName) {
+		Folder folder = new Folder(folderName);
+		folders.add(folder);
 	}
 	public ArrayList<Folder> getFolders(){
 		return folders;
