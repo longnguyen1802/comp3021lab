@@ -26,6 +26,27 @@ public class NoteBook implements java.io.Serializable,EventListener{
 			folders.add(folder);
 		}
 	}
+	public void modifyNote(String folder,String noteName,String content) {
+		for(int i=0;i<folders.size();i++) {
+			if(folders.get(i).getName().equals(folder)) {
+				folders.get(i).modifyNote(noteName, content);
+			}
+		}
+	}
+	public boolean removeNotes(String folderName,String title) {
+		   //System.out.println(folderName+"\t"+title);
+		   for(int i=0;i<folders.size();i++) {
+			   if(folders.get(i).getName().equals(folderName)) {
+				   Folder temp = folders.get(i);
+				   boolean result = temp.removeNotes(title);
+				   folders.set(i, temp);
+				   return result;
+			   }
+		   }
+		   //System.out.println("Reach false");
+		   return false;
+	}
+
 	public ObservableList<String> getList(){
 		ArrayList<String> temp = new ArrayList<String>();
 		for(Folder folder:folders) {

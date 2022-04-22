@@ -152,7 +152,15 @@ public class NoteBookWindow extends Application {
 			}
 		});
 		//buttonSave.setDisable(true);
+//		ImageView saveView = new ImageView(new Image(new File("save.png").toURI().toString()));
+//		saveView.setFitHeight(18);
+//		saveView.setFitWidth(18);
+//		saveView.setPreserveRatio(true);
+		//File f = new File("");
+		//System.out.println(f.getAbsolutePath());
+		
 
+		//gridpane.add(pic);
 		hbox.getChildren().addAll(buttonLoad, buttonSave);
 
 		return hbox;
@@ -176,6 +184,9 @@ public class NoteBookWindow extends Application {
 		noteBook.addListener(new ChangeListener<NoteBook>() {
 			@Override
 			public void changed(ObservableValue ov, NoteBook t, NoteBook t1) {
+				if(t1==null) {
+					return;
+				}
 				foldersComboBox.getItems().clear();
 				for(Folder folder:t1.getFolders()) {
 					foldersComboBox.getItems().add(folder.getName());
@@ -186,7 +197,11 @@ public class NoteBookWindow extends Application {
 
 		foldersComboBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Object>() {
 			@Override
-			public void changed(ObservableValue ov, Object t, Object t1) {
+			public void changed(ObservableValue ov, Object t, Object t1) 
+			{
+				if(t1==null) {
+					return;
+				}
 				currentFolder = t1.toString();
 				// this contains the name of the folder selected
 				// TODO update listview
@@ -355,17 +370,74 @@ public class NoteBookWindow extends Application {
 	 * Creates a grid for the center region with four columns and three rows
 	 */
 	private GridPane addGridPane() {
-		ImageView saveView = new ImageView(new Image(new File("save.png").toURI().toString()));
+		
+		
+		//ICON
+		String url =  "/Users/mahiru/eclipse-workspace/comp3021-lab6/src/main/java/comp3021/lab6/base/";
+		ImageView saveView = new ImageView(new Image(new File(url+"save.png").toURI().toString()));
 		saveView.setFitHeight(18);
 		saveView.setFitWidth(18);
 		saveView.setPreserveRatio(true);
-		ImageView deleteView = new ImageView(new Image(new File("delete.png").toURI().toString()));
+		ImageView deleteView = new ImageView(new Image(new File(url+"delete.png").toURI().toString()));
 		deleteView.setFitHeight(18);
 		deleteView.setFitWidth(18);
 		deleteView.setPreserveRatio(true);
+		//BUTTON
+		Button saveNote = new Button("Save Note");
+		saveNote.setPrefSize(100, 20);
 		
-		System.out.println(saveView);
+		saveNote.setOnAction(new EventHandler<ActionEvent>(){
+			public void handle(ActionEvent event) {
+				boolean isEmpty = foldersComboBox.getSelectionModel().isEmpty();
+				currentFolder = foldersComboBox.getValue();
+				currentSearch = titleslistView.getSelectionModel().getSelectedItem();
+				if(isEmpty || currentSearch==null) {
+					Alert alert = new Alert(AlertType.WARNING);
+					alert.setTitle("Warning");
+					alert.setContentText("Please select a folder and a note");
+					alert.showAndWait().ifPresent(rs -> {
+					    if (rs == ButtonType.OK) {
+					        //System.out.println("Pressed OK.");
+					    }
+					});
+				}
+				else {
+					NoteBook nb = noteBook.get();
+	
+		    		nb.modifyNote(currentFolder, currentSearch, textAreaNote.getText());
+	
+		    		noteBook.set(new NoteBook(nb));
+				}
+			}
+		});
 		
+		Button deleteNote = new Button("Delete Note");
+		deleteNote.setPrefSize(100, 20);
+		
+		deleteNote.setOnAction(new EventHandler<ActionEvent>(){
+			public void handle(ActionEvent event) {
+				currentFolder = foldersComboBox.getValue();
+				currentSearch = titleslistView.getSelectionModel().getSelectedItem();
+				NoteBook nb = noteBook.get();
+
+	    		nb.removeNotes(currentFolder, currentSearch);
+
+	    		noteBook.set(new NoteBook(nb));
+	    		Alert alert = new Alert(AlertType.CONFIRMATION);
+				alert.setTitle("Succeed!");
+				alert.setContentText("Your note has been successfull removed");
+				alert.showAndWait().ifPresent(rs -> {
+				    if (rs == ButtonType.OK) {
+				        //System.out.println("Pressed OK.");
+				    }
+				});
+			}
+		});
+		
+		HBox hbox = new HBox();
+		hbox.setPadding(new Insets(10)); // Set all sides to 10
+		hbox.setSpacing(8); // Gap between nodes
+		hbox.getChildren().addAll(saveView,saveNote,deleteView,deleteNote);
 		
 		//
 		GridPane grid = new GridPane();
@@ -380,9 +452,8 @@ public class NoteBookWindow extends Application {
 		textAreaNote.setEditable(true);
 
 		// 0 0 is the position in the grid
-		grid.add(saveView,0,0);
-		grid.add(deleteView,0,5);
-		//grid.add(textAreaNote, 15,0);
+		grid.add(hbox,0,0);
+		grid.add(textAreaNote, 0,1);
 
 		return grid;
 	}

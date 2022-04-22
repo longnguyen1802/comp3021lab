@@ -18,6 +18,23 @@ public class Folder implements Comparable<Folder>,java.io.Serializable{
 	public void addNote(Note other) {
 		notes.add(other);
 	}
+	public void modifyNote(String noteName,String content) {
+		for(int i=0;i<notes.size();i++) {
+			if(notes.get(i).getTitle().equals(noteName)) {
+				((TextNote)notes.get(i)).content = content;
+			}
+		}
+	}
+	public boolean removeNotes(String title) {
+		   // TODO
+		   // Given the title of the note, delete it from the folder.
+		   // Return true if it is deleted successfully, otherwise return false.itle
+			//System.out.println(title);
+			return notes.removeIf(n -> n.getTitle().equals(title));
+			//System.out.println(notes);
+			//return x;
+		}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
